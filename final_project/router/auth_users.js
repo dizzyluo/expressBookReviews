@@ -35,8 +35,26 @@ regd_users.post("/login", (req,res) => {
 
 // Add a book review
 regd_users.put("/auth/review/:isbn", (req, res) => {
-  //Write your code here
-  return res.status(300).json({message: "Yet to be implemented"});
+  const isbn = req.params.isbn;
+  const review = req.query.review;
+  const username = req.session.authorization.username;
+
+  const book = books[isbn];
+  if (!book) {
+    return res.status(404).json({message: `Book with ISBN ${isbn} not found`});
+  }
+  if (!review) {
+    return res.status(400).json({message: "Review is required as a query parameter"});
+  }
+
+  // Reviews are keyed by username, so a repeat post from the same user overwrites theirs
+  const isUpdate = Object.prototype.hasOwnProperty.call(book.reviews, username);
+  book.reviews[username] = review;
+
+  return res.status(200).json({
+    message: `Review for ISBN ${isbn} ${isUpdate ? "updated" : "added"} by ${username}`,
+    reviews: book.reviews
+  });
 });
 
 module.exports.authenticated = regd_users;
